@@ -4,39 +4,36 @@
   <meta charset="utf-8" />
   <title>Market Wall</title>
   <style>
-    /* Fill the full window exactly — no gap underneath */
     html { height: 100%; }
     body { margin: 0; height: 100dvh; min-height: 100%; background: #000;
            overflow: hidden; display: flex; flex-direction: column; }
 
-    /* Heatmaps (left) | news + S&P (right). Resize columns via "2fr 1fr". */
     .grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 8px;
       padding: 8px;
-      flex: 1 1 auto;     /* take all height above the ticker */
+      flex: 1 1 auto;
       min-height: 0;
       box-sizing: border-box;
     }
 
     .col { display: grid; gap: 8px; min-height: 0; }
-    .left  { grid-template-rows: 1fr 1fr; }     /* crypto heatmap / tech stocks */
-    .right { grid-template-rows: 1.5fr 1fr; }   /* news (bigger) / S&P 500 under it */
+    .left  { grid-template-rows: 1fr 1fr; }
+    .right { grid-template-rows: 1.5fr 1fr; }
 
     .panel { position: relative; border-radius: 10px; overflow: hidden; min-height: 0; }
     .tradingview-widget-container,
     .tradingview-widget-container__widget { height: 100%; width: 100%; }
 
-    /* Ticker strip, flush to the bottom edge */
-    .banner { flex: 0 0 46px; min-height: 46px; border-top: 1px solid #1c2530; }
-    .banner iframe { width: 100%; height: 100%; border: 0; display: block; }
+    /* Ticker strip, flush to the bottom — built in directly (no iframe, no extra file) */
+    .banner { flex: 0 0 46px; min-height: 46px; border-top: 1px solid #1c2530; background: #0e1218; }
   </style>
 </head>
 <body>
   <div class="grid">
 
-    <!-- ================= LEFT COLUMN ================= -->
+    <!-- LEFT COLUMN -->
     <div class="col left">
 
       <!-- CRYPTO HEATMAP -->
@@ -55,7 +52,7 @@
         </div>
       </div>
 
-      <!-- TECH STOCK HEATMAP (NASDAQ 100) -->
+      <!-- TECH STOCK HEATMAP -->
       <div class="panel">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -73,10 +70,10 @@
 
     </div>
 
-    <!-- ================= RIGHT COLUMN ================= -->
+    <!-- RIGHT COLUMN -->
     <div class="col right">
 
-      <!-- TOP STORIES (all markets) -->
+      <!-- TOP STORIES -->
       <div class="panel">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -90,7 +87,7 @@
         </div>
       </div>
 
-      <!-- S&P 500 TREND GRAPH -->
+      <!-- S&P 500 TREND -->
       <div class="panel">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -113,9 +110,38 @@
 
   </div>
 
-  <!-- Scrolling ticker, flush to the bottom -->
+  <!-- BOTTOM TICKER (inlined directly — no iframe, no separate file) -->
   <div class="banner">
-    <iframe src="stock-ticker.html" title="Market ticker"></iframe>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript"
+        src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+      {
+        "symbols": [
+          { "proName": "COINBASE:BTCUSD", "title": "Bitcoin" },
+          { "proName": "COINBASE:SUIUSD", "title": "SUI" },
+          { "proName": "COINBASE:SOLUSD", "title": "Solana" },
+          { "proName": "COINBASE:2ZUSD",  "title": "DoubleZero" },
+          { "proName": "COINBASE:ETHUSD", "title": "Ethereum" },
+          { "proName": "NASDAQ:COIN",     "title": "Coinbase" },
+          { "proName": "NASDAQ:PYPL",     "title": "PayPal" },
+          { "proName": "NASDAQ:TSLA",     "title": "Tesla" },
+          { "proName": "NYSE:XYZ",        "title": "Block" },
+          { "proName": "NASDAQ:NVDA",     "title": "Nvidia" },
+          { "proName": "COINBASE:XRPUSD", "title": "XRP" },
+          { "proName": "NASDAQ:PLTR",     "title": "Palantir" },
+          { "proName": "NYSE:QBTS",       "title": "D-Wave (QBTS)" },
+          { "proName": "NASDAQ:QUBT",     "title": "Quantum Computing (QUBT)" },
+          { "proName": "NYSE:GME",        "title": "GameStop" },
+          { "proName": "NASDAQ:IBIT",     "title": "iShares Bitcoin (IBIT)" },
+          { "proName": "NASDAQ:MSTR",     "title": "Strategy (MSTR)" },
+          { "proName": "NYSE:XXI",        "title": "Twenty One (XXI)" }
+        ],
+        "showSymbolLogo": true, "isTransparent": false,
+        "displayMode": "adaptive", "colorTheme": "dark", "locale": "en"
+      }
+      </script>
+    </div>
   </div>
 
   <!-- Full page reload every 10 minutes -->
