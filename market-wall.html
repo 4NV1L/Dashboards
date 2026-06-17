@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Market Wall</title>
+  <style>
+    /* Fill the full window exactly — no gap underneath */
+    html { height: 100%; }
+    body { margin: 0; height: 100dvh; min-height: 100%; background: #000;
+           overflow: hidden; display: flex; flex-direction: column; }
+
+    /* Heatmaps (left) | news + S&P (right). Resize columns via "2fr 1fr". */
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 8px;
+      padding: 8px;
+      flex: 1 1 auto;     /* take all height above the ticker */
+      min-height: 0;
+      box-sizing: border-box;
+    }
+
+    .col { display: grid; gap: 8px; min-height: 0; }
+    .left  { grid-template-rows: 1fr 1fr; }     /* crypto heatmap / tech stocks */
+    .right { grid-template-rows: 1.5fr 1fr; }   /* news (bigger) / S&P 500 under it */
+
+    .panel { position: relative; border-radius: 10px; overflow: hidden; min-height: 0; }
+    .tradingview-widget-container,
+    .tradingview-widget-container__widget { height: 100%; width: 100%; }
+
+    /* Ticker strip, flush to the bottom edge */
+    .banner { flex: 0 0 46px; min-height: 46px; border-top: 1px solid #1c2530; }
+    .banner iframe { width: 100%; height: 100%; border: 0; display: block; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <!-- ================= LEFT COLUMN ================= -->
+    <div class="col left">
+
+      <!-- CRYPTO HEATMAP -->
+      <div class="panel">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript"
+            src="https://s3.tradingview.com/external-embedding/embed-widget-crypto-coins-heatmap.js" async>
+          {
+            "dataSource": "Crypto", "blockSize": "market_cap_calc", "blockColor": "change",
+            "locale": "en", "symbolUrl": "", "colorTheme": "dark", "hasTopBar": false,
+            "isDataSetEnabled": false, "isZoomEnabled": true, "hasSymbolTooltip": true,
+            "isMonoSize": false, "width": "100%", "height": "100%"
+          }
+          </script>
+        </div>
+      </div>
+
+      <!-- TECH STOCK HEATMAP (NASDAQ 100) -->
+      <div class="panel">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript"
+            src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+          {
+            "dataSource": "NASDAQ100", "blockSize": "market_cap_basic", "blockColor": "change",
+            "grouping": "sector", "locale": "en", "symbolUrl": "", "colorTheme": "dark",
+            "hasTopBar": false, "isDataSetEnabled": false, "isZoomEnabled": true,
+            "hasSymbolTooltip": true, "isMonoSize": false, "width": "100%", "height": "100%"
+          }
+          </script>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= RIGHT COLUMN ================= -->
+    <div class="col right">
+
+      <!-- TOP STORIES (all markets) -->
+      <div class="panel">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript"
+            src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+          {
+            "feedMode": "all_symbols", "isTransparent": false, "displayMode": "regular",
+            "width": "100%", "height": "100%", "colorTheme": "dark", "locale": "en"
+          }
+          </script>
+        </div>
+      </div>
+
+      <!-- S&P 500 TREND GRAPH -->
+      <div class="panel">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript"
+            src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+          {
+            "symbols": [["S&P 500", "FOREXCOM:SPXUSD|12M"]], "chartOnly": false,
+            "width": "100%", "height": "100%", "locale": "en", "colorTheme": "dark",
+            "autosize": true, "showVolume": false, "hideDateRanges": false,
+            "scalePosition": "right", "scaleMode": "Normal",
+            "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+            "noTimeScale": false, "valuesTracking": "1", "changeMode": "price-and-percent",
+            "chartType": "area", "dateRanges": ["1m|30", "3m|60", "12m|1D", "all|1M"]
+          }
+          </script>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Scrolling ticker, flush to the bottom -->
+  <div class="banner">
+    <iframe src="stock-ticker.html" title="Market ticker"></iframe>
+  </div>
+
+  <!-- Full page reload every 10 minutes -->
+  <script>
+    setTimeout(function () { location.reload(); }, 10 * 60 * 1000);
+  </script>
+</body>
+</html>
