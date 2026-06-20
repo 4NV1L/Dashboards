@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Dashboard Rotator</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  iframe { position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; display: block; background: #000; }
+</style>
+</head>
+<body>
+  <iframe id="frame" src="" allow="autoplay"></iframe>
+<script>
+  // ===== EDIT HERE: the rotation playlist (filenames live in this same folder) =====
+  const DASHBOARDS = [
+    "macro-econ.html",
+    "market-wall.html",
+    "onchain-wall.html",
+    "watchlist.html",
+    "macro-wall.html"
+  ];
+  const PERIOD_MIN = 30;   // minutes per dashboard
+  // ================================================================================
+
+  const PERIOD = PERIOD_MIN * 60 * 1000;
+  const start = parseInt(new URLSearchParams(location.search).get("start") || "0", 10);
+  const frame = document.getElementById("frame");
+
+  function show(){
+    const step = Math.floor(Date.now() / PERIOD);
+    const idx = (step + start) % DASHBOARDS.length;
+    const url = DASHBOARDS[idx];
+    if (frame.getAttribute("data-url") !== url) {
+      frame.setAttribute("data-url", url);
+      frame.src = url;                 // changing src reloads the dashboard fresh
+    }
+  }
+  function schedule(){
+    show();
+    const now = Date.now();
+    const next = (Math.floor(now / PERIOD) + 1) * PERIOD;   // next :00 / :30 boundary
+    setTimeout(schedule, next - now + 250);
+  }
+  schedule();
+</script>
+</body>
+</html>
