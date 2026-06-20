@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Watchlist</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif; color: #e8edf2; }
+  .wall { height: 100dvh; display: flex; flex-direction: column; gap: 6px; padding: 6px; box-sizing: border-box; }
+  .section { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .seclabel { flex: 0 0 auto; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #7a8694; padding: 2px 4px 6px; }
+  .secgrid { flex: 1 1 auto; min-height: 0; display: grid; grid-auto-rows: 1fr; gap: 6px; }
+  .tile { background: #0e1218; border-radius: 8px; overflow: hidden; min-height: 0; position: relative; }
+  .tradingview-widget-container, .tradingview-widget-container__widget { height: 100%; width: 100%; }
+  .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 10px; color: #7a8694; }
+  .placeholder .nm { font-size: 18px; font-weight: 600; color: #e8edf2; }
+  .placeholder .nt { font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="wall">
+    <div class="section"><div class="seclabel">Crypto</div><div class="secgrid" id="crypto-grid"></div></div>
+    <div class="section"><div class="seclabel">Stocks &amp; Watchlist</div><div class="secgrid" id="stocks-grid"></div></div>
+  </div>
+
+<script>
+  // ===== EDIT HERE =====  [name, "EXCHANGE:SYMBOL"]   (symbol null = placeholder tile)
+  const COLUMNS = 4;
+  const RANGE = "3M";            // default range: 1M | 3M | 12M | ALL
+  const CRYPTO = [
+    ["Bitcoin",     "COINBASE:BTCUSD"],
+    ["Ethereum",    "COINBASE:ETHUSD"],
+    ["Solana",      "COINBASE:SOLUSD"],
+    ["Sui",         "COINBASE:SUIUSD"],
+    ["DoubleZero",  "COINBASE:2ZUSD"],
+    ["Cardano",     "COINBASE:ADAUSD"],
+    ["XRP",         "COINBASE:XRPUSD"],
+    ["Hyperliquid", "COINBASE:HYPEUSD"],
+  ];
+  const STOCKS = [
+    ["Coinbase",            "NASDAQ:COIN"],
+    ["Tesla",               "NASDAQ:TSLA"],
+    ["SpaceX",              "NASDAQ:SPCX"],   // IPO'd Jun 12 2026
+    ["D-Wave (QBTS)",       "NYSE:QBTS"],
+    ["Quantum Computing",   "NASDAQ:QUBT"],
+    ["Palantir",            "NASDAQ:PLTR"],
+    ["Nvidia",              "NASDAQ:NVDA"],
+    ["PayPal",              "NASDAQ:PYPL"],
+  ];
+  // =====================
+
+  function tvConfig(name, symbol){
+    return JSON.stringify({
+      symbols: [[name, symbol + "|" + RANGE]],
+      chartOnly: false, width: "100%", height: "100%", locale: "en", colorTheme: "dark",
+      autosize: true, showVolume: false, hideDateRanges: false, scalePosition: "right", scaleMode: "Normal",
+      fontFamily: "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+      noTimeScale: false, valuesTracking: "1", changeMode: "price-and-percent", chartType: "candlesticks",
+      upColor: "#36a35e", downColor: "#e5484d", borderUpColor: "#36a35e", borderDownColor: "#e5484d",
+      wickUpColor: "#36a35e", wickDownColor: "#e5484d",
+      dateRanges: ["1m|1D","3m|1D","12m|1D","all|1W"]
+    });
+  }
+  function makeTile(name, symbol){
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    if(!symbol){
+      tile.innerHTML = '<div class="placeholder"><div class="nm">' + name + '</div><div class="nt">Private company — no public ticker</div></div>';
+      return tile;
+    }
+    const c = document.createElement("div"); c.className = "tradingview-widget-container";
+    const w = document.createElement("div"); w.className = "tradingview-widget-container__widget";
+    c.appendChild(w);
+    const s = document.createElement("script");
+    s.type = "text/javascript"; s.async = true;
+    s.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js";
+    s.textContent = tvConfig(name, symbol);
+    c.appendChild(s);
+    tile.appendChild(c);
+    return tile;
+  }
+  function build(id, arr){
+    const g = document.getElementById(id);
+    g.style.gridTemplateColumns = "repeat(" + COLUMNS + ", 1fr)";
+    arr.forEach(function(row){ g.appendChild(makeTile(row[0], row[1])); });
+  }
+  build("crypto-grid", CRYPTO);
+  build("stocks-grid", STOCKS);
+
+  // keep fresh + reset ranges to default
+  setTimeout(function(){ location.reload(); }, 30 * 60 * 1000);
+</script>
+</body>
+</html>

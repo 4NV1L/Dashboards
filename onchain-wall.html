@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>On-chain Wall</title>
+<style>
+  html { height: 100%; }
+  body { margin: 0; height: 100dvh; min-height: 100%; background: #000; overflow: hidden;
+    display: grid; grid-template-columns: 1fr 2fr; gap: 8px; padding: 8px; box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif; color: #e8edf2; }
+  .left { display: grid; grid-template-rows: repeat(5, 1fr); gap: 8px; min-height: 0; }
+  .right { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1.2fr 1fr 1fr; gap: 8px; min-height: 0;
+    grid-template-areas: "tmc btcd" "mining mining" "trends trends"; }
+  .area-tmc { grid-area: tmc; } .area-btcd { grid-area: btcd; position: relative; } .area-mining { grid-area: mining; } .area-trends { grid-area: trends; }
+  #trends iframe { width: 100% !important; height: 100% !important; border: 0 !important; filter: invert(1) hue-rotate(180deg); }
+  #news::-webkit-scrollbar { width: 6px; }
+  #news::-webkit-scrollbar-thumb { background: #2a3441; border-radius: 3px; }
+  .news-item { padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05); break-inside: avoid; }
+  .news-item:last-child { border-bottom: none; }
+  .news-title { font-size: 18px; line-height: 1.35; color: #e8edf2; }
+  .news-meta { font-size: 12px; color: #7a8694; margin-top: 3px; }
+  .panel { background: #0e1218; border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .ptitle { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #7a8694; margin-bottom: 6px; flex: 0 0 auto; }
+  .body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+  .row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 14px; }
+  .lab { color: #9aa6b2; } .val { font-weight: 600; }
+  .big { font-size: 26px; font-weight: 700; line-height: 1; }
+  .sub { color: #7a8694; font-size: 11px; margin-top: 1px; }
+  .up { color: #36a35e; } .down { color: #e5484d; }
+  .fng-bar { position: relative; width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #e5484d, #e8833a, #d9c54b, #7bbf5b, #36a35e); }
+  .fng-marker { position: absolute; top: -3px; width: 3px; height: 14px; border-radius: 2px; background: #fff; transform: translateX(-1.5px); }
+  .chart-panel { background: #0e1218; border-radius: 10px; overflow: hidden; min-height: 0; }
+  .tradingview-widget-container, .tradingview-widget-container__widget { height: 100%; width: 100%; }
+  .ranges { display: flex; gap: 2px; }
+  .ranges button { background: transparent; border: none; color: #7a8694; font-size: 12px; padding: 2px 7px; border-radius: 4px; cursor: pointer; font-family: inherit; }
+  .ranges button.on { background: #1c2530; color: #e8edf2; }
+  .kpi { display: flex; flex-direction: column; }
+  .kpi .k { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: #7a8694; }
+  .kpi .v { font-size: 15px; font-weight: 600; margin-top: 1px; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="panel"><div class="ptitle">Crypto Fear &amp; Greed</div><div class="body" id="fng"><div class="sub">Loading…</div></div></div>
+    <div class="chart-panel" style="grid-row: span 2"><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+      {"symbols":[["BTC Dominance","CRYPTOCAP:BTC.D|3M"]],"chartOnly":false,"width":"100%","height":"100%","locale":"en","colorTheme":"dark","autosize":true,"showVolume":false,"hideDateRanges":false,"scalePosition":"right","scaleMode":"Normal","fontFamily":"-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif","noTimeScale":false,"valuesTracking":"1","changeMode":"price-and-percent","chartType":"area","dateRanges":["1m|30","3m|60","12m|1D","all|1M"]}
+      </script></div></div>
+    <div class="panel"><div class="ptitle">Next Halving</div><div class="body" id="halving"><div class="sub">Loading…</div></div></div>
+    <div class="panel"><div class="ptitle">Bitcoin Hashprice</div>
+      <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center">
+        <div style="display:flex;align-items:baseline;gap:8px"><span id="hp-now" style="font-size:30px;font-weight:800;line-height:1">—</span><span class="sub">/ PH / day</span></div>
+        <div id="hp-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px;margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="chart-panel area-tmc"><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+      {"symbols":[["Total Market Cap","CRYPTOCAP:TOTAL|ALL"]],"chartOnly":false,"width":"100%","height":"100%","locale":"en","colorTheme":"dark","autosize":true,"showVolume":false,"hideDateRanges":false,"scalePosition":"right","scaleMode":"Normal","fontFamily":"-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif","noTimeScale":false,"valuesTracking":"1","changeMode":"price-and-percent","chartType":"area","dateRanges":["1m|30","3m|60","12m|1D","all|1M"]}
+      </script></div></div>
+
+    <div class="chart-panel area-btcd" style="display:flex;flex-direction:column;padding:12px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="ptitle" style="margin-bottom:0">Bitcoin Hashrate</div>
+        <div class="ranges" id="hash-ranges">
+          <button data-p="1m">1M</button><button data-p="3m">3M</button><button data-p="6m">6M</button><button data-p="1y">1Y</button><button data-p="all" class="on">All</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="big" id="hash-now">\u2026</span><span class="sub" id="hash-chg"></span></div>
+      <div id="hash-chart" style="flex:1 1 auto;position:relative;min-height:0;margin-top:8px"></div>
+    </div>
+
+    <div class="panel area-mining" style="padding:14px 18px">
+      <div class="ptitle">Bitcoin News</div>
+      <div id="news" style="flex:1 1 auto;min-height:0;overflow:hidden;column-count:3;column-gap:26px"></div>
+    </div>
+
+    <div class="panel area-trends" style="padding:12px 16px;display:flex;flex-direction:column">
+      <div class="ptitle">Bitcoin · Google Search Interest (all time)</div>
+      <div id="trends" style="flex:1 1 auto;min-height:0;border-radius:8px;overflow:hidden;background:#0e1218"></div>
+    </div>
+  </div>
+
+<script>
+  const REFRESH_MIN = 5;
+  const fmtCap = v => v>=1e12 ? "$"+(v/1e12).toFixed(2)+"T" : v>=1e9 ? "$"+(v/1e9).toFixed(1)+"B" : v>=1e6 ? "$"+(v/1e6).toFixed(0)+"M" : "$"+Math.round(v).toLocaleString();
+  const fmtPct = v => (v>=0?"+":"") + v.toFixed(2) + "%";
+  const fmtNum = v => Math.round(v).toLocaleString();
+  const fgColor = v => v<25?"#e5484d" : v<45?"#e8833a" : v<55?"#d9c54b" : v<75?"#7bbf5b" : "#36a35e";
+  const row = (lab,val,cls) => `<div class="row"><span class="lab">${lab}</span><span class="val ${cls||''}">${val}</span></div>`;
+  const trendColor = vals => vals[vals.length-1] >= vals[0] ? "#36a35e" : "#e5484d";
+  const day = ms => new Date(ms).toISOString().slice(0,10);
+  async function J(u){ const r = await fetch(u); if(!r.ok) throw 0; return r.json(); }
+  function spark(values, color, h){
+    if(!values || values.length < 2) return "";
+    const w=100, min=Math.min(...values), max=Math.max(...values), rng=(max-min)||1;
+    const pts = values.map((v,i)=>[ (i/(values.length-1))*w, h-((v-min)/rng)*(h-3)-1.5 ]);
+    const line = pts.map(p=>p[0].toFixed(2)+","+p[1].toFixed(2)).join(" ");
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"><polygon points="0,${h} ${line} ${w},${h}" fill="${color}" opacity="0.13"/><polyline points="${line}" fill="none" stroke="${color}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
+  async function loadFNG(){
+    const el = document.getElementById("fng");
+    try {
+      const data = (await J("https://api.alternative.me/fng/?limit=30")).data;
+      const cur = parseInt(data[0].value,10), col = fgColor(cur);
+      const vals = data.map(d=>+d.value).reverse();
+      el.innerHTML = `<div style="text-align:center"><div style="font-size:38px;font-weight:700;line-height:1;color:${col}">${cur}</div><div style="font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:${col}">${data[0].value_classification}</div></div><div style="margin-top:8px">${spark(vals, col, 26)}</div><div class="fng-bar" style="margin-top:8px"><div class="fng-marker" style="left:${cur}%"></div></div>`;
+    } catch(e) { el.innerHTML = '<div class="sub">unavailable</div>'; }
+  }
+  async function loadMarket(){
+    const el = document.getElementById("market");
+    try {
+      const g = (await J("https://api.coingecko.com/api/v3/global")).data;
+      const chg = g.market_cap_change_percentage_24h_usd;
+      let s = "";
+      try { const mc = await J("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily"); const vals = mc.prices.map(p=>p[1]); s = `<div style="margin:6px 0 2px">${spark(vals, trendColor(vals), 26)}</div>`; } catch(_){}
+      el.innerHTML = `<div class="big">${fmtCap(g.total_market_cap.usd)}</div><div class="sub">Total market cap</div>${s}` + row("24h", fmtPct(chg), chg>=0?"up":"down") + row("BTC dom", g.market_cap_percentage.btc.toFixed(1)+"%");
+    } catch(e) { el.innerHTML = '<div class="sub">unavailable</div>'; }
+  }
+  async function loadHashprice(){
+    const el = document.getElementById("hashprice");
+    try {
+      const [hr, rw, px] = await Promise.all([
+        J("https://mempool.space/api/v1/mining/hashrate/1y"),
+        J("https://mempool.space/api/v1/mining/reward-stats/144"),
+        J("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd")
+      ]);
+      const btc = px.bitcoin.usd, dailyBTC = (+rw.totalReward)/1e8, hPH = hr.currentHashrate/1e15, usdPH = dailyBTC*btc/hPH;
+      el.innerHTML = `<div class="big">$${usdPH.toFixed(2)}</div><div class="sub">USD / PH / day</div><div style="height:6px"></div>` + row("Per TH / day", "$"+(usdPH/1000).toFixed(4)) + row("Difficulty", (hr.currentDifficulty/1e12).toFixed(1)+" T") + row("BTC price", "$"+fmtNum(btc));
+    } catch(e) { el.innerHTML = '<div class="sub">unavailable</div>'; }
+  }
+  let hvTarget = null, hvBlocks = null, hvReward = null;
+  async function loadHalving(){
+    const el = document.getElementById("halving");
+    try {
+      const height = await J("https://mempool.space/api/blocks/tip/height");
+      const nextBlock = Math.ceil((height+1)/210000)*210000;
+      hvBlocks = nextBlock - height;
+      hvReward = 50/Math.pow(2, nextBlock/210000);
+      hvTarget = Date.now() + hvBlocks*600*1000;
+      const dateStr = new Date(hvTarget).toLocaleDateString(undefined, {month:"short", year:"numeric"});
+      el.innerHTML = `<div style="text-align:center"><div id="hv-count" style="font-size:clamp(52px,4.2vw,104px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.02;white-space:nowrap">\u2014</div><div class="sub">until the next halving</div></div><div style="height:8px"></div>` + row("Blocks left", fmtNum(hvBlocks)) + row("Est. date", "~"+dateStr) + row("New reward", hvReward+" BTC");
+      tickHalving();
+    } catch(e) { if(el) el.innerHTML = '<div class="sub">unavailable</div>'; }
+  }
+  function tickHalving(){
+    const c = document.getElementById("hv-count");
+    if(!c || hvTarget==null) return;
+    let diff = Math.max(0, hvTarget - Date.now());
+    const d=Math.floor(diff/86400000); diff-=d*86400000;
+    const h=Math.floor(diff/3600000); diff-=h*3600000;
+    const m=Math.floor(diff/60000); diff-=m*60000;
+    const sec=Math.floor(diff/1000);
+    const p=n=>String(n).padStart(2,"0");
+    c.textContent = d+"d "+p(h)+":"+p(m)+":"+p(sec);
+  }
+
+  // ---- Hashprice stat wall ----
+  async function buildMining(){
+    try {
+      const [hr, da, rw, height] = await Promise.all([
+        J("https://mempool.space/api/v1/mining/hashrate/3d"),
+        J("https://mempool.space/api/v1/difficulty-adjustment"),
+        J("https://mempool.space/api/v1/mining/reward-stats/144"),
+        J("https://mempool.space/api/blocks/tip/height")
+      ]);
+      const feesPct = (+rw.totalFee)/(+rw.totalReward)*100;
+      const avgReward = (+rw.totalReward)/144/1e8;
+      const halvingDays = Math.round((Math.ceil((height+1)/210000)*210000 - height)*10/60/24);
+      const kpis = [
+        ["Network Hashrate", (hr.currentHashrate/1e18).toFixed(0)+" EH/s"],
+        ["Difficulty", (hr.currentDifficulty/1e12).toFixed(1)+" T"],
+        ["Avg Block Reward", avgReward.toFixed(2)+" BTC"],
+        ["Fees in Blocks", feesPct.toFixed(2)+"%"],
+        ["Est. Diff Adjust", (da.difficultyChange>=0?"+":"")+da.difficultyChange.toFixed(2)+"%"],
+        ["Next Halving", "~"+fmtNum(halvingDays)+" d"]
+      ];
+      document.getElementById("hp-kpis").innerHTML = kpis.map(k=>`<div class="kpi"><span class="k" style="font-size:10px">${k[0]}</span><span class="v" style="font-size:18px">${k[1]}</span></div>`).join("");
+      try {
+        const pr = await J("https://mempool.space/api/v1/prices");
+        const curUSD = ((+rw.totalReward)/1e8) * pr.USD / (hr.currentHashrate/1e15);
+        document.getElementById("hp-now").textContent = "$"+curUSD.toFixed(2);
+      } catch(_) { document.getElementById("hp-now").textContent = "\u2014"; }
+    } catch(e) {
+      document.getElementById("hp-now").textContent = "unavailable";
+    }
+  }
+
+  function timeAgo(sec){
+    const s = Math.max(0, Date.now()/1000 - sec);
+    if(s<3600) return Math.floor(s/60)+"m ago";
+    if(s<86400) return Math.floor(s/3600)+"h ago";
+    return Math.floor(s/86400)+"d ago";
+  }
+  function esc(str){ const d=document.createElement("div"); d.textContent=str||""; return d.innerHTML; }
+  async function loadNews(){
+    const el = document.getElementById("news");
+    try {
+      const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://cointelegraph.com/rss"));
+      if(!res.ok) throw 0;
+      const xml = await res.text();
+      const all = Array.from(new DOMParser().parseFromString(xml, "text/xml").querySelectorAll("item"));
+      let items = all.filter(function(it){ return /bitcoin|btc/i.test((it.querySelector("title")||{}).textContent||""); });
+      if(items.length < 5) items = all;
+      items = items.slice(0,18);
+      if(!items.length){ el.innerHTML='<div class="sub">No headlines</div>'; return; }
+      el.innerHTML = items.map(function(it){
+        var t = (it.querySelector("title")||{}).textContent || "";
+        var pd = (it.querySelector("pubDate")||{}).textContent;
+        var ago = pd ? timeAgo(Date.parse(pd)/1000) : "";
+        return '<div class="news-item"><div class="news-title">'+esc(t)+'</div><div class="news-meta">Cointelegraph'+(ago?' · '+ago:'')+'</div></div>';
+      }).join("");
+    } catch(e){ el.innerHTML='<div class="sub">News unavailable</div>'; }
+  }
+  const HASH_LABELS = {"1m":"1 month","3m":"3 months","6m":"6 months","1y":"1 year","all":"all time"};
+  let hashPeriod = "all";
+  async function buildHashChart(period){
+    period = period || hashPeriod;
+    const now = document.getElementById("hash-now"), chg = document.getElementById("hash-chg"), c = document.getElementById("hash-chart");
+    try {
+      const hr = await J("https://mempool.space/api/v1/mining/hashrate/" + period);
+      const series = hr.hashrates.map(h=>h.avgHashrate);
+      now.textContent = (hr.currentHashrate/1e18).toFixed(0) + " EH/s";
+      const first = series[0], last = series[series.length-1], pct = (last-first)/first*100;
+      chg.textContent = (pct>=0?"\u25B2 +":"\u25BC ") + Math.abs(pct).toFixed(1) + "% \u00B7 " + HASH_LABELS[period];
+      chg.style.color = pct>=0 ? "#36a35e" : "#e5484d";
+      const col = pct>=0 ? "#36a35e" : "#e5484d";
+      const w=100,h=100,min=Math.min(...series),max=Math.max(...series),rng=(max-min)||1;
+      const pts = series.map((v,i)=>[ (i/(series.length-1))*w, h-((v-min)/rng)*(h-6)-3 ]);
+      const line = pts.map(p=>p[0].toFixed(2)+","+p[1].toFixed(2)).join(" ");
+      c.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><polygon points="0,${h} ${line} ${w},${h}" fill="${col}" opacity="0.14"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>
+        <div style="position:absolute;top:0;left:0;font-size:11px;color:#6b7682">${(max/1e18).toFixed(0)} EH/s</div>
+        <div style="position:absolute;bottom:0;left:0;font-size:11px;color:#6b7682">${(min/1e18).toFixed(0)} EH/s</div>
+        <div style="position:absolute;bottom:0;right:0;font-size:11px;color:#6b7682">${HASH_LABELS[period]}</div>`;
+    } catch(e) { c.innerHTML = '<div class="sub">Hashrate chart unavailable</div>'; }
+  }
+  document.querySelectorAll("#hash-ranges button").forEach(b=>{
+    b.addEventListener("click", ()=>{ hashPeriod=b.dataset.p; document.querySelectorAll("#hash-ranges button").forEach(x=>x.classList.toggle("on", x===b)); buildHashChart(hashPeriod); });
+  });
+  function refresh(){ loadFNG(); loadHalving(); buildMining(); buildHashChart(hashPeriod); loadNews(); }
+  refresh();
+  setInterval(refresh, REFRESH_MIN*60*1000);
+  setInterval(tickHalving, 1000);
+  setTimeout(function(){ location.reload(); }, 30*60*1000);
+</script>
+  <script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/3620_RC01/embed_loader.js"></script>
+  <script type="text/javascript">
+    (function renderTrends(){
+      if (window.trends && trends.embed) {
+        trends.embed.renderExploreWidgetTo(
+          document.getElementById("trends"),
+          "TIMESERIES",
+          {"comparisonItem":[{"keyword":"Bitcoin","geo":"","time":"all"}],"category":0,"property":""},
+          {"exploreQuery":"q=Bitcoin&date=all","guestPath":"https://trends.google.com:443/trends/embed/"}
+        );
+      } else { setTimeout(renderTrends, 300); }
+    })();
+  </script>
+</body>
+</html>

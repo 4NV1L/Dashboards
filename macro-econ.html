@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Macro Economics</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif; color: #e8edf2; }
+  .wall { height: 100dvh; display: flex; flex-direction: column; gap: 6px; padding: 6px; box-sizing: border-box; }
+  .section { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .seclabel { flex: 0 0 auto; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #7a8694; padding: 2px 4px 6px; }
+  .secgrid { flex: 1 1 auto; min-height: 0; display: grid; grid-auto-rows: 1fr; gap: 6px; }
+  .tile { background: #0e1218; border-radius: 8px; overflow: hidden; min-height: 0; position: relative; }
+  .tradingview-widget-container, .tradingview-widget-container__widget { height: 100%; width: 100%; }
+</style>
+</head>
+<body>
+  <div class="wall">
+    <div class="section"><div class="seclabel">US Economy</div><div class="secgrid" id="economy-grid"></div></div>
+    <div class="section"><div class="seclabel">Markets &amp; Commodities</div><div class="secgrid" id="markets-grid"></div></div>
+    <div class="section"><div class="seclabel">Risk &amp; Cycle</div><div class="secgrid" id="riskcycle-grid"></div></div>
+  </div>
+
+<script>
+  // ===== EDIT HERE =====  [name, "EXCHANGE:SYMBOL", "RANGE"]   range: 12M | 60M | ALL
+  const COLUMNS = 5;
+  const RANGE = "60M";          // fallback default if a tile omits its range
+  const ECONOMY = [
+    ["US National Debt",    "FRED:GFDEBTN",     "ALL"],
+    ["M2 Money Supply",     "FRED:M2SL",        "ALL"],
+    ["30Y Mortgage Rate",   "FRED:MORTGAGE30US","60M"],
+    ["Fed Funds Rate",      "FRED:FEDFUNDS",    "ALL"],
+    ["US 10Y Yield",        "FRED:DGS10",       "60M"],
+  ];
+  const MARKETS = [
+    ["Crude Oil (WTI)",     "TVC:USOIL",        "60M"],
+    ["Gold",                "TVC:GOLD",         "60M"],
+    ["Silver",              "TVC:SILVER",       "60M"],
+    ["Bitcoin",             "COINBASE:BTCUSD",  "60M"],
+    ["Bitcoin Miners (WGMI)","NASDAQ:WGMI",     "60M"],
+  ];
+  const RISKCYCLE = [
+    ["Yield Curve (10Y-2Y)","FRED:T10Y2Y",      "60M"],
+    ["Fed Balance Sheet",   "FRED:WALCL",       "60M"],
+    ["Inflation (CPI)",     "FRED:CPIAUCSL",    "ALL"],
+    ["Unemployment Rate",   "FRED:UNRATE",      "60M"],
+    ["HY Credit Spreads",   "FRED:BAMLH0A0HYM2","12M"],
+  ];
+  // =====================
+
+  function tvConfig(name, symbol, range){
+    return JSON.stringify({
+      symbols: [[name, symbol + "|" + range]],
+      chartOnly: false, width: "100%", height: "100%", locale: "en", colorTheme: "dark",
+      autosize: true, showVolume: false, hideDateRanges: false, scalePosition: "right", scaleMode: "Normal",
+      fontFamily: "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+      noTimeScale: false, valuesTracking: "1", changeMode: "price-and-percent", chartType: "area",
+      dateRanges: ["12m|1D","60m|1W","all|1M"]
+    });
+  }
+  function makeTile(name, symbol, range){
+    const tile = document.createElement("div"); tile.className = "tile";
+    const c = document.createElement("div"); c.className = "tradingview-widget-container";
+    const w = document.createElement("div"); w.className = "tradingview-widget-container__widget";
+    c.appendChild(w);
+    const s = document.createElement("script");
+    s.type = "text/javascript"; s.async = true;
+    s.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js";
+    s.textContent = tvConfig(name, symbol, range);
+    c.appendChild(s);
+    tile.appendChild(c);
+    return tile;
+  }
+  function build(id, arr){
+    const g = document.getElementById(id);
+    g.style.gridTemplateColumns = "repeat(" + COLUMNS + ", 1fr)";
+    arr.forEach(function(row){ g.appendChild(makeTile(row[0], row[1], row[2] || RANGE)); });
+  }
+  build("economy-grid", ECONOMY);
+  build("markets-grid", MARKETS);
+  build("riskcycle-grid", RISKCYCLE);
+
+  setTimeout(function(){ location.reload(); }, 30 * 60 * 1000);
+</script>
+</body>
+</html>
